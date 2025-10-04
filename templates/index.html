@@ -1,0 +1,523 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section bg-gradient-primary">
+    <div class="container text-center py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <h1 class="display-3 fw-bold text-white mb-4 animate-fade-in">
+                    <i class="fas fa-brain text-warning me-3"></i>
+                    AI-Powered Stock Price Prediction
+                </h1>
+                <p class="lead text-white-50 mb-4">
+                    Harness the power of LSTM Neural Networks to forecast stock prices with advanced machine learning and real-time market data
+                </p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="#prediction-tool" class="btn btn-primary btn-lg shadow-lg">
+                        <i class="fas fa-rocket me-2"></i>Get Started
+                    </a>
+                    <a href="#features" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-info-circle me-2"></i>Learn More
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5 fw-bold">
+            <i class="fas fa-star text-warning me-2"></i>
+            Powerful Features
+        </h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 bg-dark border-primary shadow hover-lift">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-brain fa-3x text-primary"></i>
+                        </div>
+                        <h5 class="card-title fw-bold mb-3">Deep Learning LSTM</h5>
+                        <p class="card-text text-muted">
+                            Advanced Long Short-Term Memory neural networks trained on historical data patterns for accurate predictions
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 bg-dark border-success shadow hover-lift">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-chart-bar fa-3x text-success"></i>
+                        </div>
+                        <h5 class="card-title fw-bold mb-3">Real-Time Market Data</h5>
+                        <p class="card-text text-muted">
+                            Fetch live stock data from Yahoo Finance API for accurate and up-to-date market analysis
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 bg-dark border-info shadow hover-lift">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-chart-line fa-3x text-info"></i>
+                        </div>
+                        <h5 class="card-title fw-bold mb-3">Visual Analytics</h5>
+                        <p class="card-text text-muted">
+                            Interactive charts and comprehensive performance metrics for data-driven investment decisions
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row g-4 mt-2">
+            <div class="col-md-4">
+                <div class="card h-100 bg-dark border-warning shadow hover-lift">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-file-csv fa-3x text-warning"></i>
+                        </div>
+                        <h5 class="card-title fw-bold mb-3">CSV Data Upload</h5>
+                        <p class="card-text text-muted">
+                            Upload your own historical stock data in CSV format for custom analysis and predictions
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 bg-dark border-danger shadow hover-lift">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-search fa-3x text-danger"></i>
+                        </div>
+                        <h5 class="card-title fw-bold mb-3">Company Search</h5>
+                        <p class="card-text text-muted">
+                            Smart autocomplete search with 40+ pre-indexed companies for quick access to predictions
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 bg-dark border-secondary shadow hover-lift">
+                    <div class="card-body text-center p-4">
+                        <div class="feature-icon mb-3">
+                            <i class="fas fa-cogs fa-3x text-secondary"></i>
+                        </div>
+                        <h5 class="card-title fw-bold mb-3">Customizable Parameters</h5>
+                        <p class="card-text text-muted">
+                            Fine-tune lookback period, training epochs, and forecast duration for optimal results
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Prediction Tool Section -->
+<section id="prediction-tool" class="py-5 bg-dark-subtle">
+    <div class="container">
+        <h2 class="text-center mb-5 fw-bold">
+            <i class="fas fa-robot text-primary me-2"></i>
+            Try Stock Prediction
+        </h2>
+        
+        <!-- Input Section -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-lg-10">
+                <div class="card bg-dark border-0 shadow-lg">
+                    <div class="card-header bg-gradient-primary">
+                        <ul class="nav nav-tabs card-header-tabs" id="predictionTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="ticker-tab" data-bs-toggle="tab" data-bs-target="#ticker-panel" type="button" role="tab">
+                                    <i class="fas fa-search me-2"></i>Search Ticker
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="csv-tab" data-bs-toggle="tab" data-bs-target="#csv-panel" type="button" role="tab">
+                                    <i class="fas fa-file-csv me-2"></i>Upload CSV
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="tab-content" id="predictionTabContent">
+                            <!-- Ticker Search Panel -->
+                            <div class="tab-pane fade show active" id="ticker-panel" role="tabpanel">
+                                <form id="predictionForm">
+                                    <div class="row mb-4">
+                                        <div class="col-md-12">
+                                            <label class="form-label fw-bold">
+                                                <i class="fas fa-building me-2"></i>Stock Ticker Symbol
+                                            </label>
+                                            <div class="position-relative">
+                                                <input type="text" class="form-control form-control-lg" id="ticker" placeholder="Search company (e.g., AAPL, GOOGL, MSFT)" required>
+                                                <div id="searchResults" class="search-results"></div>
+                                            </div>
+                                            <div class="form-text">Search by company name or ticker symbol</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Quick Select Buttons -->
+                                    <div class="mb-4">
+                                        <label class="form-label fw-bold">Quick Select Popular Stocks:</label>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <button type="button" class="btn btn-sm btn-outline-primary stock-quick-btn" data-ticker="AAPL">
+                                                <i class="fab fa-apple me-1"></i>Apple
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-primary stock-quick-btn" data-ticker="GOOGL">
+                                                <i class="fab fa-google me-1"></i>Google
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-primary stock-quick-btn" data-ticker="MSFT">
+                                                <i class="fab fa-microsoft me-1"></i>Microsoft
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-primary stock-quick-btn" data-ticker="AMZN">
+                                                <i class="fab fa-amazon me-1"></i>Amazon
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-primary stock-quick-btn" data-ticker="TSLA">
+                                                <i class="fas fa-car me-1"></i>Tesla
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-primary stock-quick-btn" data-ticker="META">
+                                                <i class="fab fa-meta me-1"></i>Meta
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-primary stock-quick-btn" data-ticker="NVDA">
+                                                <i class="fas fa-microchip me-1"></i>NVIDIA
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label fw-bold">
+                                                <i class="fas fa-calendar me-2"></i>Lookback Period (days)
+                                            </label>
+                                            <input type="number" class="form-control" id="lookback" value="60" min="10" max="200" required>
+                                            <div class="form-text">Historical data window (10-200)</div>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label fw-bold">
+                                                <i class="fas fa-sync me-2"></i>Training Epochs
+                                            </label>
+                                            <input type="number" class="form-control" id="epochs" value="100" min="20" max="200" required>
+                                            <div class="form-text">Training iterations (20-200)</div>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label fw-bold">
+                                                <i class="fas fa-forward me-2"></i>Forecast Days Ahead
+                                            </label>
+                                            <input type="number" class="form-control" id="daysAhead" value="5" min="1" max="30" required>
+                                            <div class="form-text">Future prediction range (1-30)</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Advanced Model Options -->
+                                    <div class="card bg-dark border-primary mb-4">
+                                        <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                            <h6 class="mb-0">
+                                                <i class="fas fa-rocket me-2"></i>Model Intelligence Level
+                                            </h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row mb-3">
+                                                <div class="col-12">
+                                                    <div class="form-check form-switch mb-3">
+                                                        <input class="form-check-input" type="checkbox" id="useUltraMode">
+                                                        <label class="form-check-label" for="useUltraMode">
+                                                            <strong class="text-warning">🚀 ULTRA MODE (Maximum Intelligence)</strong>
+                                                            <small class="d-block text-muted">
+                                                                Transformer + LSTM + Sentiment + Macro + Fourier + Wavelet Analysis
+                                                            </small>
+                                                            <small class="d-block text-info">
+                                                                Training: 3-5 min | Accuracy: Best possible | Features: 50+
+                                                            </small>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div id="standardModelOptions">
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <div class="form-check form-switch">
+                                                            <input class="form-check-input" type="checkbox" id="useTechnicalIndicators" checked>
+                                                            <label class="form-check-label" for="useTechnicalIndicators">
+                                                                <strong>Technical Indicators</strong>
+                                                                <small class="d-block text-muted">RSI, MACD, Bollinger Bands, Moving Averages</small>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <div class="form-check form-switch">
+                                                            <input class="form-check-input" type="checkbox" id="useEnsemble">
+                                                            <label class="form-check-label" for="useEnsemble">
+                                                                <strong>Ensemble Model</strong>
+                                                                <small class="d-block text-muted">LSTM + GRU combination</small>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="alert alert-warning mb-0" id="ultraModeInfo" style="display:none;">
+                                                <i class="fas fa-star me-2"></i>
+                                                <strong>ULTRA MODE ENABLED:</strong> Using world-class AI with Transformer architecture, sentiment analysis, macroeconomic indicators, and advanced signal processing. This is the most sophisticated prediction available.
+                                            </div>
+                                            
+                                            <div class="alert alert-info mb-0" id="standardModeInfo">
+                                                <i class="fas fa-info-circle me-2"></i>
+                                                <strong>Advanced Mode:</strong> Enable both options for maximum accuracy. Training will take 2-3 minutes.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-primary btn-lg w-100" id="predictBtn">
+                                        <i class="fas fa-rocket me-2"></i>Generate Advanced Prediction
+                                    </button>
+                                </form>
+                            </div>
+                            
+                            <!-- CSV Upload Panel -->
+                            <div class="tab-pane fade" id="csv-panel" role="tabpanel">
+                                <form id="csvUploadForm" enctype="multipart/form-data">
+                                    <div class="mb-4">
+                                        <label class="form-label fw-bold">
+                                            <i class="fas fa-file-csv me-2"></i>Upload Historical Data (CSV)
+                                        </label>
+                                        <input type="file" class="form-control" id="csvFile" accept=".csv" required>
+                                        <div class="form-text">CSV must contain 'Date' and 'Close' columns</div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label fw-bold">Lookback Period</label>
+                                            <input type="number" class="form-control" id="csvLookback" value="60" min="10" max="200" required>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label fw-bold">Training Epochs</label>
+                                            <input type="number" class="form-control" id="csvEpochs" value="50" min="10" max="100" required>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label fw-bold">Forecast Days</label>
+                                            <input type="number" class="form-control" id="csvDaysAhead" value="5" min="1" max="30" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-success btn-lg w-100" id="csvPredictBtn">
+                                        <i class="fas fa-upload me-2"></i>Upload & Predict
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="text-center my-5" style="display: none;">
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 text-muted">Training LSTM model... This may take 30-60 seconds</p>
+        </div>
+        
+        <!-- Error Alert -->
+        <div id="errorAlert" class="alert alert-danger alert-dismissible fade show" role="alert" style="display: none;">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <span id="errorMessage"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        
+        <!-- Results Section -->
+        <div id="resultsSection" style="display: none;">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <!-- Stock Info Card -->
+                    <div class="card bg-dark border-0 shadow-lg mb-4">
+                        <div class="card-header bg-gradient-primary">
+                            <h5 class="mb-0">
+                                <i class="fas fa-building me-2"></i>
+                                <span id="stockName">Stock Information</span>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-md-3 mb-3">
+                                    <div class="metric-card">
+                                        <p class="text-muted mb-1">Current Price</p>
+                                        <h3 class="mb-0" id="currentPrice">$0.00</h3>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="metric-card">
+                                        <p class="text-muted mb-1">Predicted Price</p>
+                                        <h3 class="mb-0 text-primary" id="predictedPrice">$0.00</h3>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="metric-card">
+                                        <p class="text-muted mb-1">Price Change</p>
+                                        <h3 class="mb-0" id="priceChange">$0.00</h3>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="metric-card">
+                                        <p class="text-muted mb-1">Change %</p>
+                                        <h3 class="mb-0" id="priceChangePct">0.00%</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Metrics Card -->
+                    <div class="card bg-dark border-0 shadow-lg mb-4">
+                        <div class="card-header bg-gradient-primary">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-pie me-2"></i>
+                                Performance Metrics
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-md-3 mb-3">
+                                    <div class="metric-box">
+                                        <p class="text-muted mb-1">MAPE</p>
+                                        <h4 id="mape">0.00%</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="metric-box">
+                                        <p class="text-muted mb-1">RMSE</p>
+                                        <h4 id="rmse">0.00</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="metric-box">
+                                        <p class="text-muted mb-1">MAE</p>
+                                        <h4 id="mae">0.00</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="metric-box">
+                                        <p class="text-muted mb-1">Dir. Accuracy</p>
+                                        <h4 id="directionalAccuracy">0.00%</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts Card -->
+                    <div class="card bg-dark border-0 shadow-lg">
+                        <div class="card-header bg-gradient-primary">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-area me-2"></i>
+                                Prediction Visualizations
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <ul class="nav nav-pills mb-2" id="chartTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="price-tab" data-bs-toggle="pill" data-bs-target="#price-chart-panel" type="button" role="tab">Price Chart</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="loss-tab" data-bs-toggle="pill" data-bs-target="#loss-chart-panel" type="button" role="tab">Loss Curve</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="accuracy-tab" data-bs-toggle="pill" data-bs-target="#accuracy-chart-panel" type="button" role="tab">Accuracy</button>
+                                    </li>
+                                </ul>
+                                <div class="tab-content" id="chartTabContent">
+                                    <div class="tab-pane fade show active" id="price-chart-panel" role="tabpanel">
+                                        <canvas id="predictionChart" height="320"></canvas>
+                                    </div>
+                                    <div class="tab-pane fade" id="loss-chart-panel" role="tabpanel">
+                                        <canvas id="lossChart" height="320"></canvas>
+                                    </div>
+                                    <div class="tab-pane fade" id="accuracy-chart-panel" role="tabpanel">
+                                        <canvas id="accuracyChart" height="320"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5 fw-bold">
+            <i class="fas fa-cogs text-info me-2"></i>
+            How It Works
+        </h2>
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="card bg-dark h-100 border-0 shadow hover-lift">
+                    <div class="card-body text-center p-4">
+                        <div class="step-number mb-3">1</div>
+                        <h5 class="fw-bold mb-3">Data Collection</h5>
+                        <p class="text-muted">Fetch real-time historical stock data from Yahoo Finance or upload custom CSV data</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-dark h-100 border-0 shadow hover-lift">
+                    <div class="card-body text-center p-4">
+                        <div class="step-number mb-3">2</div>
+                        <h5 class="fw-bold mb-3">Data Processing</h5>
+                        <p class="text-muted">Normalize and prepare data using MinMaxScaler for optimal LSTM training</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-dark h-100 border-0 shadow hover-lift">
+                    <div class="card-body text-center p-4">
+                        <div class="step-number mb-3">3</div>
+                        <h5 class="fw-bold mb-3">LSTM Training</h5>
+                        <p class="text-muted">Train deep neural network with 3 LSTM layers to learn temporal patterns</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-dark h-100 border-0 shadow hover-lift">
+                    <div class="card-body text-center p-4">
+                        <div class="step-number mb-3">4</div>
+                        <h5 class="fw-bold mb-3">Predict & Analyze</h5>
+                        <p class="text-muted">Generate future predictions with comprehensive metrics and visual analytics</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Disclaimer Section -->
+<section class="py-4 bg-warning bg-opacity-10 border-top border-bottom border-warning">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="alert alert-warning border-warning mb-0" role="alert">
+                    <h5 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Important Disclaimer
+                    </h5>
+                    <p class="mb-0">
+                        This application is for <strong>educational and research purposes only</strong>. Stock price predictions should NOT be used as the sole basis for investment decisions. Always consult with qualified financial advisors, conduct your own research, and never invest more than you can afford to lose. Past performance does not guarantee future results.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

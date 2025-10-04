@@ -1,0 +1,21 @@
+# Docker Compose for Stock Price Prediction Web App
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: stock-predictor
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - MODEL_CACHE_DIR=/app/models_cache
+    volumes:
+      - ./models_cache:/app/models_cache
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
