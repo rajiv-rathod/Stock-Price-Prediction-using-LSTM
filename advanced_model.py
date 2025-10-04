@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 from sklearn.preprocessing import MinMaxScaler, RobustScaler
+from datetime import datetime, timedelta
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.layers import (
     Dense, LSTM, Dropout, Bidirectional, 
@@ -69,12 +70,16 @@ class AdvancedStockPredictor:
         high_close = np.abs(high - close.shift())
         low_close = np.abs(low - close.shift())
         ranges = pd.concat([high_low, high_close, low_close], axis=1)
-        true_range = np.max(ranges, axis=1)
+        true_range = ranges.max(axis=1)
         return true_range.rolling(period).mean()
     
     def add_technical_indicators(self, data):
         """Add comprehensive technical indicators to the dataset"""
         df = data.copy()
+        
+        # Flatten multi-index columns if present (from yfinance)
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = df.columns.get_level_values(0)
         
         # Price-based features
         df['Returns'] = df['Close'].pct_change()
@@ -95,21 +100,35 @@ class AdvancedStockPredictor:
         df['MACD_Hist'] = df['MACD'] - df['MACD_Signal']
         
         # Bollinger Bands
-        df['BB_Upper'], df['BB_Middle'], df['BB_Lower'] = self.calculate_bollinger_bands(df['Close'])
-        df['BB_Width'] = (df['BB_Upper'] - df['BB_Lower']) / df['BB_Middle']
-        df['BB_Position'] = (df['Close'] - df['BB_Lower']) / (df['BB_Upper'] - df['BB_Lower'])
+        bb_upper, bb_middle, bb_lower = self.calculate_bollinger_bands(df['Close'])
+        df['BB_Upper'] = bb_upper
+        df['BB_Middle'] = bb_middle
+        df['BB_Lower'] = bb_lower
+        
+        # Calculate BB_Width with safe division
+        bb_width = (bb_upper - bb_lower) / bb_middle
+        df['BB_Width'] = bb_width.replace([np.inf, -np.inf], np.nan).fillna(0)
+        
+        # Calculate BB_Position with safe division
+        bb_range = bb_upper - bb_lower
+        bb_position = (df['Close'] - bb_lower) / bb_range
+        df['BB_Position'] = bb_position.replace([np.inf, -np.inf], np.nan).fillna(0.5)
         
         # Volatility
         df['Volatility'] = df['Returns'].rolling(window=20).std()
         df['ATR'] = self.calculate_atr(df['High'], df['Low'], df['Close'])
         
         # Volume indicators
-        df['Volume_SMA'] = df['Volume'].rolling(window=20).mean()
-        df['Volume_Ratio'] = df['Volume'] / df['Volume_SMA']
+        volume_sma = df['Volume'].rolling(window=20).mean()
+        df['Volume_SMA'] = volume_sma
+        volume_ratio = df['Volume'] / volume_sma
+        df['Volume_Ratio'] = volume_ratio.replace([np.inf, -np.inf], np.nan).fillna(1)
         
         # Price momentum
         df['Momentum'] = df['Close'] - df['Close'].shift(10)
-        df['ROC'] = ((df['Close'] - df['Close'].shift(10)) / df['Close'].shift(10)) * 100
+        close_shift = df['Close'].shift(10)
+        roc = ((df['Close'] - close_shift) / close_shift) * 100
+        df['ROC'] = roc.replace([np.inf, -np.inf], np.nan).fillna(0)
         
         # Price channels
         df['High_20'] = df['High'].rolling(window=20).max()
