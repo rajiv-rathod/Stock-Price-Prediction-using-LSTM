@@ -760,27 +760,25 @@ def predict_ultra():
                 'order_flow': 4,
                 'total': len(predictor.feature_columns)
             },
+            'stock_info': {'name': ticker, 'symbol': ticker},
             'current_price': round(current_price, 2),
             'predicted_price': round(predicted_price, 2),
             'price_change': round(price_change, 2),
             'price_change_pct': round(price_change_pct, 2),
             'metrics': {
-                'MAPE': round(metrics['MAPE'], 2),
-                'RMSE': round(metrics['RMSE'], 2),
-                'MAE': round(metrics['MAE'], 2),
-                'MSE': round(metrics['MSE'], 2),
+                'mape': round(metrics['MAPE'], 2),
+                'rmse': round(metrics['RMSE'], 2),
+                'mae': round(metrics['MAE'], 2),
+                'mse': round(metrics['MSE'], 2),
                 'directional_accuracy': round(metrics['directional_accuracy'], 2)
             },
-            'historical_data': {
-                'dates': historical_dates,
-                'actual': [round(float(x), 2) for x in actuals.tolist()],
-                'predicted': [round(float(x), 2) for x in predictions.tolist()]
-            },
-            'future_predictions': {
-                'dates': future_dates,
-                'prices': [round(float(x), 2) for x in future_predictions]
-            },
+            'dates': historical_dates,
+            'actual_prices': [round(float(x), 2) for x in actuals.tolist()],
+            'predictions': [round(float(x), 2) for x in predictions.tolist()],
+            'future_predictions': [round(float(x), 2) for x in future_predictions],
+            'future_dates': future_dates,
             'training_history': training_history,
+            'training_time': 0,
             'training_epochs_completed': len(training_history['loss']),
             'timestamp': datetime.now().isoformat()
         }
