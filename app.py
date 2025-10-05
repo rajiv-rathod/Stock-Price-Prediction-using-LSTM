@@ -296,6 +296,52 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/dashboard')
+def dashboard():
+    """Render professional trading dashboard"""
+    return render_template('dashboard.html')
+
+
+@app.route('/api/stock-info', methods=['GET'])
+def stock_info():
+    """Get current stock information"""
+    try:
+        ticker = request.args.get('ticker', 'AAPL').upper()
+        
+        # Fetch current data
+        stock = yf.Ticker(ticker)
+        hist = stock.history(period='2d')
+        
+        if hist.empty:
+            return jsonify({'success': False, 'error': 'No data found'}), 404
+        
+        current_price = float(hist['Close'].iloc[-1])
+        prev_price = float(hist['Close'].iloc[-2]) if len(hist) > 1 else current_price
+        change = current_price - prev_price
+        change_percent = (change / prev_price) * 100 if prev_price != 0 else 0
+        
+        info = stock.info
+        
+        response = {
+            'success': True,
+            'ticker': ticker,
+            'name': info.get('longName', ticker),
+            'current_price': round(current_price, 2),
+            'change': round(change, 2),
+            'change_percent': round(change_percent, 2),
+            'volume': int(hist['Volume'].iloc[-1]),
+            'market_cap': info.get('marketCap', 0),
+            'sector': info.get('sector', 'N/A'),
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        return jsonify(response), 200
+        
+    except Exception as e:
+        logger.error(f"Stock info error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/predict', methods=['POST'])
 def predict():
     """
@@ -381,22 +427,27 @@ def predict():
         
         response = {
             'success': True,
+            'ticker': ticker,
+            'model_type': 'Standard LSTM',
+            'features_used': 1,
             'stock_info': stock_info,
             'current_price': round(current_price, 2),
             'predicted_price': round(predicted_price, 2),
             'price_change': round(price_change, 2),
             'price_change_pct': round(price_change_pct, 2),
             'metrics': metrics,
+            'dates': test_dates,
+            'actual_prices': [float(x) for x in actual.tolist()],
+            'predictions': [float(x) for x in predictions.flatten().tolist()],
+            'future_predictions': [float(x) for x in future_predictions.flatten().tolist()],
+            'future_dates': future_dates,
             'historical_data': {
                 'dates': test_dates,
                 'actual': [float(x) for x in actual.tolist()],
                 'predicted': [float(x) for x in predictions.flatten().tolist()]
             },
-            'future_predictions': {
-                'dates': future_dates,
-                'prices': [float(x) for x in future_predictions.flatten().tolist()]
-            },
             'plot': plot_data,
+            'training_time': 0,
             'timestamp': datetime.now().isoformat()
         }
         
@@ -579,22 +630,25 @@ def predict_advanced():
             'model_type': 'Ensemble (LSTM+GRU)' if use_ensemble else 'Advanced Bidirectional LSTM',
             'features_used': len(predictor.feature_columns),
             'feature_list': predictor.feature_columns,
+            'stock_info': {'name': ticker, 'symbol': ticker},
             'current_price': round(current_price, 2),
             'predicted_price': round(predicted_price, 2),
             'price_change': round(price_change, 2),
             'price_change_pct': round(price_change_pct, 2),
             'metrics': {
-                'MAPE': round(metrics['MAPE'], 2),
-                'RMSE': round(metrics['RMSE'], 2),
-                'MAE': round(metrics['MAE'], 2),
-                'MSE': round(metrics['MSE'], 2),
+                'mape': round(metrics['MAPE'], 2),
+                'rmse': round(metrics['RMSE'], 2),
+                'mae': round(metrics['MAE'], 2),
+                'mse': round(metrics['MSE'], 2),
                 'directional_accuracy': round(metrics['directional_accuracy'], 2)
             },
-            'future_predictions': {
-                'dates': future_dates,
-                'prices': [round(float(x), 2) for x in future_predictions]
-            },
+            'dates': [d.strftime('%Y-%m-%d') for d in predictor.dataset.index[-len(actuals):]],
+            'actual_prices': [float(x) for x in actuals],
+            'predictions': [float(x) for x in predictions],
+            'future_predictions': [round(float(x), 2) for x in future_predictions],
+            'future_dates': future_dates,
             'training_history': training_history,
+            'training_time': 0,
             'training_epochs_completed': len(predictor.history.history['loss']),
             'timestamp': datetime.now().isoformat()
         }
