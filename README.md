@@ -11,19 +11,25 @@ A **production-ready**, **real-time** web application for stock price prediction
 ## ✨ Features
 
 ### 🤖 Core AI/ML
+- **Ultra-Advanced Models** - Transformer + LSTM ensemble with 50+ features
 - **Deep Learning LSTM** - 3-layer neural network for time series forecasting
+- **Technical Indicators** - RSI, MACD, Bollinger Bands, Moving Averages (19 indicators)
+- **Sentiment Analysis** - News and social media integration
 - **Real-time Data** - Live stock data from Yahoo Finance API
-- **Custom Data Support** - Upload your own CSV files for analysis
+- **Custom Data Support** - Upload your own CSV files (OHLCV format)
 - **Advanced Metrics** - MAPE, RMSE, MAE, and directional accuracy
 - **Multi-day Forecasting** - Predict up to 30 days ahead
+- **Confidence Scoring** - Prediction reliability indicators
 
 ### 🌐 Web Application
-- **Modern UI** - Responsive design with Bootstrap 5
+- **Professional Trading Dashboard** - Real-time ticker tape, candlestick charts, and metrics
+- **Modern UI** - Responsive dark-themed design with Bootstrap 5
 - **Company Search** - Real-time autocomplete ticker search
-- **Interactive Charts** - 4-panel analytical dashboard with Chart.js
+- **Interactive Charts** - TradingView-style visualization with ApexCharts
 - **Dual Input Modes** - Ticker search or CSV upload
 - **Quick Select** - Popular stocks shortcuts (AAPL, GOOGL, MSFT, etc.)
 - **Mobile-Friendly** - Works on all devices
+- **Real-Time Updates** - Live price ticker and streaming data
 
 ### 🔧 Developer Features
 - **REST API** - Full API access for integration
@@ -76,6 +82,36 @@ docker run -p 5000:5000 stock-predictor
 ```
 
 ## 📖 Usage
+
+### Professional Trading Dashboard
+
+The new **Trading Dashboard** provides a comprehensive, real-time stock analysis interface:
+
+1. **Access the Dashboard**
+   - Navigate to http://localhost:5000/dashboard
+   - Professional dark-themed interface inspired by trading platforms
+   
+2. **Real-Time Ticker Tape**
+   - Live price updates for popular stocks (AAPL, GOOGL, MSFT, etc.)
+   - Auto-refreshes every 60 seconds
+   - Shows current price, change, and percentage
+
+3. **AI Model Selection**
+   - 🚀 **ULTRA Mode**: Transformer + LSTM + Sentiment + 50+ features (Best accuracy)
+   - ⚡ **Advanced Mode**: Bidirectional LSTM + Technical indicators + Ensemble
+   - 📊 **Standard Mode**: Classic LSTM architecture (Fastest training)
+
+4. **Interactive Charts**
+   - TradingView-style candlestick charts
+   - Real-time price predictions with confidence bands
+   - Technical indicator overlays (RSI, MACD, Moving Averages)
+   - Volume analysis and distribution charts
+
+5. **Key Metrics Dashboard**
+   - Current vs. Predicted price comparison
+   - Model accuracy and confidence scores
+   - Detailed performance metrics (MAE, RMSE, MAPE)
+   - Directional accuracy percentage
 
 ### Web Interface
 

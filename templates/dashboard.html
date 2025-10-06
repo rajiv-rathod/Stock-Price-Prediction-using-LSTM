@@ -1,0 +1,552 @@
+{% extends 'layout.html' %}
+
+{% block extra_head %}
+<!-- Lightweight Charts for Trading View style charts -->
+<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+<!-- ApexCharts for additional visualizations -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<style>
+    .ticker-tape {
+        background: linear-gradient(90deg, #1a1a2e 0%, #16213e 100%);
+        border-bottom: 2px solid #667eea;
+        padding: 12px 0;
+        overflow: hidden;
+        position: sticky;
+        top: 56px;
+        z-index: 1000;
+    }
+    
+    .ticker-item {
+        display: inline-block;
+        margin: 0 30px;
+        padding: 8px 16px;
+        background: rgba(102, 126, 234, 0.1);
+        border-radius: 8px;
+        border: 1px solid rgba(102, 126, 234, 0.3);
+    }
+    
+    .ticker-item .symbol {
+        font-weight: 700;
+        color: #667eea;
+        margin-right: 10px;
+    }
+    
+    .ticker-item .price {
+        color: #e2e8f0;
+        font-weight: 600;
+    }
+    
+    .ticker-item .change {
+        margin-left: 10px;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+    }
+    
+    .ticker-item .change.positive {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+    }
+    
+    .ticker-item .change.negative {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+    }
+    
+    .dashboard-container {
+        background: #0f172a;
+        min-height: calc(100vh - 200px);
+    }
+    
+    .bg-darker {
+        background-color: #0a0e1a !important;
+    }
+    
+    .control-panel {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        border-radius: 12px;
+        padding: 24px;
+        border: 1px solid rgba(102, 126, 234, 0.3);
+    }
+    
+    .chart-container {
+        background: #1e293b;
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        margin-bottom: 20px;
+    }
+    
+    .metric-card {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid rgba(102, 126, 234, 0.3);
+        text-align: center;
+        height: 100%;
+    }
+    
+    .metric-card .value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 10px 0;
+    }
+    
+    .metric-card .label {
+        color: #94a3b8;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .metric-card.primary .value { color: #667eea; }
+    .metric-card.success .value { color: #10b981; }
+    .metric-card.danger .value { color: #ef4444; }
+    .metric-card.warning .value { color: #f59e0b; }
+    .metric-card.info .value { color: #06b6d4; }
+    
+    .prediction-panel {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 24px;
+        color: white;
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    }
+    
+    .prediction-panel .big-price {
+        font-size: 3.5rem;
+        font-weight: 700;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .confidence-indicator {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .confidence-high { background: rgba(16, 185, 129, 0.3); color: #10b981; }
+    .confidence-medium { background: rgba(245, 158, 11, 0.3); color: #f59e0b; }
+    .confidence-low { background: rgba(239, 68, 68, 0.3); color: #ef4444; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Real-time Ticker Tape -->
+<div class="ticker-tape">
+    <div class="container-fluid">
+        <div id="tickerContent" class="ticker-scroll">
+            <span class="ticker-item">
+                <span class="symbol">Loading...</span>
+            </span>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-container py-4">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-dark border-0 shadow-lg">
+                    <div class="card-body py-4">
+                        <h1 class="display-5 mb-3 text-white">
+                            <i class="fas fa-chart-line text-primary me-3"></i>
+                            Stock Trading Dashboard
+                        </h1>
+                        <p class="lead text-muted mb-3">Professional AI-powered stock prediction with real-time analytics and advanced machine learning models</p>
+                        <hr class="border-secondary">
+                        <div class="row mt-4">
+                            <div class="col-md-4 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-robot fa-2x text-primary me-3"></i>
+                                    <div>
+                                        <h5 class="mb-1 text-white">AI-Powered Predictions</h5>
+                                        <p class="mb-0 text-muted">Advanced LSTM & Transformer models</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-chart-candlestick fa-2x text-primary me-3"></i>
+                                    <div>
+                                        <h5 class="mb-1 text-white">Real-Time Data</h5>
+                                        <p class="mb-0 text-muted">Live market data & ticker tape</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-brain fa-2x text-primary me-3"></i>
+                                    <div>
+                                        <h5 class="mb-1 text-white">93-96% Accuracy</h5>
+                                        <p class="mb-0 text-muted">ULTRA model with 50+ features</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Control Panel -->
+        <div class="row mb-4">
+            <div class="col-lg-4 mb-4">
+                <div class="card h-100 bg-dark border-0 shadow-lg">
+                    <div class="card-header bg-dark border-bottom border-secondary">
+                        <h4 class="mb-0 text-white">
+                            <i class="fas fa-search me-2 text-primary"></i> Stock Selection
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <form id="dashboardForm">
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-white">
+                                    <i class="fas fa-chart-line me-2"></i>Stock Symbol
+                                </label>
+                                <input type="text" 
+                                       class="form-control form-control-lg" 
+                                       id="dashboardTicker" 
+                                       placeholder="e.g., AAPL" 
+                                       value="AAPL" 
+                                       required>
+                                <div class="form-text">Type to search companies</div>
+                                <div id="dashboardSearchResults" class="list-group mt-2" style="display: none; position: absolute; z-index: 1000; max-height: 300px; overflow-y: auto; width: 90%;"></div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-white">
+                                    <i class="fas fa-robot me-2"></i>AI Model Selection
+                                </label>
+                                <select class="form-select form-select-lg" id="dashboardModelType">
+                                    <option value="ultra">🚀 ULTRA Mode (Best Accuracy - 93-96%)</option>
+                                    <option value="advanced">⚡ Advanced Mode (Fast - 90-93%)</option>
+                                    <option value="standard">📊 Standard Mode (Quick - 80-85%)</option>
+                                </select>
+                                <div class="form-text">Choose based on speed vs accuracy needs</div>
+                            </div>
+                            
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Pro Tip:</strong> Use ULTRA mode for maximum accuracy with 50+ features including sentiment analysis and technical indicators.
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-8 mb-4">
+                <div class="card h-100 bg-dark border-0 shadow-lg">
+                    <div class="card-header bg-dark border-bottom border-secondary">
+                        <h4 class="mb-0 text-white">
+                            <i class="fas fa-cogs me-2 text-primary"></i> Training Configuration
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <form id="dashboardParamsForm">
+                            <div class="row">
+                                <div class="col-md-4 mb-4">
+                                    <label class="form-label fw-bold text-white">
+                                        <i class="fas fa-calendar me-2"></i>Lookback Period
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control form-control-lg" 
+                                           id="dashboardLookback" 
+                                           value="60" 
+                                           min="10" 
+                                           max="200">
+                                    <div class="form-text">Days of historical data (10-200)</div>
+                                </div>
+                                
+                                <div class="col-md-4 mb-4">
+                                    <label class="form-label fw-bold text-white">
+                                        <i class="fas fa-sync me-2"></i>Training Epochs
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control form-control-lg" 
+                                           id="dashboardEpochs" 
+                                           value="100" 
+                                           min="50" 
+                                           max="200">
+                                    <div class="form-text">Training iterations (50-200)</div>
+                                </div>
+                                
+                                <div class="col-md-4 mb-4">
+                                    <label class="form-label fw-bold text-white">
+                                        <i class="fas fa-forward me-2"></i>Forecast Days
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control form-control-lg" 
+                                           id="dashboardDaysAhead" 
+                                           value="7" 
+                                           min="1" 
+                                           max="30">
+                                    <div class="form-text">Future prediction range (1-30)</div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-primary btn-lg px-5 w-100" id="dashboardPredictBtn">
+                                        <i class="fas fa-rocket me-2"></i>
+                                        Generate Prediction & Analysis
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <button type="button" class="btn btn-outline-light btn-lg w-100" id="refreshDataBtn">
+                                        <i class="fas fa-sync-alt me-2"></i>
+                                        Refresh Data
+                                    </button>
+                                </div>
+                                <div class="col-md-6">
+                                    <button type="button" class="btn btn-outline-info btn-lg w-100" data-bs-toggle="modal" data-bs-target="#csvUploadModal">
+                                        <i class="fas fa-file-csv me-2"></i>
+                                        Upload CSV
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Loading State -->
+        <div id="dashboardLoading" class="text-center my-5" style="display: none;">
+            <div class="card bg-dark border-0 shadow-lg">
+                <div class="card-body py-5">
+                    <div class="spinner-border text-primary" style="width: 4rem; height: 4rem;" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h3 class="mt-4 text-white">Training AI Model...</h3>
+                    <p class="text-muted lead">Analyzing patterns, computing indicators, and generating predictions</p>
+                    <p class="text-info">This may take 2-3 minutes depending on the model selected</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Error Alert -->
+        <div id="dashboardError" class="alert alert-danger alert-dismissible fade show" role="alert" style="display: none;">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <span id="dashboardErrorMessage"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        
+        <!-- Results Dashboard -->
+        <div id="dashboardResults" style="display: none;">
+            <!-- Key Metrics Row -->
+            <div class="row mb-4">
+                <div class="col-md-3 mb-3">
+                    <div class="metric-card primary">
+                        <div class="label">Current Price</div>
+                        <div class="value" id="metricCurrentPrice">$0.00</div>
+                        <small class="text-muted" id="metricLastUpdate">--</small>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="metric-card success">
+                        <div class="label">Predicted Price</div>
+                        <div class="value" id="metricPredictedPrice">$0.00</div>
+                        <small class="text-muted" id="metricPredictedChange">--</small>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="metric-card info">
+                        <div class="label">Model Accuracy</div>
+                        <div class="value" id="metricAccuracy">0%</div>
+                        <small class="text-muted">MAPE Score</small>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="metric-card warning">
+                        <div class="label">Confidence</div>
+                        <div class="value" id="metricConfidence">0%</div>
+                        <small class="text-muted">Prediction Reliability</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main Chart -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="chart-container">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="text-white mb-0">
+                                <i class="fas fa-chart-candlestick me-2"></i>
+                                <span id="chartTitle">Price Chart</span>
+                            </h5>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="changeChartType('candlestick')">
+                                    <i class="fas fa-chart-candlestick"></i> Candlestick
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="changeChartType('line')">
+                                    <i class="fas fa-chart-line"></i> Line
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="changeChartType('area')">
+                                    <i class="fas fa-chart-area"></i> Area
+                                </button>
+                            </div>
+                        </div>
+                        <div id="tradingChart" style="height: 500px;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Prediction Panel and Technical Indicators -->
+            <div class="row mb-4">
+                <div class="col-md-4 mb-3">
+                    <div class="prediction-panel">
+                        <h6 class="text-white-50 mb-2">
+                            <i class="fas fa-crystal-ball me-2"></i>7-Day Forecast
+                        </h6>
+                        <div class="big-price" id="forecastPrice">$0.00</div>
+                        <div class="mt-3">
+                            <span class="confidence-indicator" id="confidenceIndicator">
+                                <i class="fas fa-check-circle me-1"></i>High Confidence
+                            </span>
+                        </div>
+                        <div class="mt-3">
+                            <small class="text-white-50">Expected Change:</small>
+                            <h5 class="mt-1" id="forecastChange">+$0.00 (0%)</h5>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-8 mb-3">
+                    <div class="chart-container">
+                        <h6 class="text-white mb-3">
+                            <i class="fas fa-chart-bar me-2"></i>Performance Metrics
+                        </h6>
+                        <div id="metricsChart" style="height: 250px;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Technical Indicators and Additional Charts -->
+            <div class="row mb-4">
+                <div class="col-md-6 mb-3">
+                    <div class="chart-container">
+                        <h6 class="text-white mb-3">
+                            <i class="fas fa-signal me-2"></i>Technical Indicators
+                        </h6>
+                        <div id="indicatorsChart" style="height: 300px;"></div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <div class="chart-container">
+                        <h6 class="text-white mb-3">
+                            <i class="fas fa-chart-pie me-2"></i>Prediction Distribution
+                        </h6>
+                        <div id="distributionChart" style="height: 300px;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Detailed Metrics Table -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="chart-container">
+                        <h6 class="text-white mb-3">
+                            <i class="fas fa-table me-2"></i>Detailed Analytics
+                        </h6>
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Metric</th>
+                                        <th>Value</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="metricsTableBody">
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted">No data available</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSV Upload Modal -->
+<div class="modal fade" id="csvUploadModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark border-secondary">
+            <div class="modal-header border-bottom border-secondary">
+                <h5 class="modal-title text-white">
+                    <i class="fas fa-file-csv me-2 text-primary"></i>Upload Custom CSV Data
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Supported Format:</strong> Your CSV file must contain 'Date' and 'Close' columns. OHLCV format is also supported.
+                </div>
+                
+                <form id="csvUploadFormDashboard" enctype="multipart/form-data">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-white">Select CSV File</label>
+                        <div class="input-group input-group-lg">
+                            <input type="file" class="form-control" id="csvFileDashboard" accept=".csv" required>
+                            <button class="btn btn-outline-primary" type="button" onclick="document.getElementById('csvFileDashboard').click()">
+                                <i class="fas fa-folder-open me-1"></i> Browse
+                            </button>
+                        </div>
+                        <div class="form-text">Only CSV files are supported</div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-white">Lookback Period</label>
+                            <input type="number" class="form-control" value="60" min="10" max="200" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-white">Training Epochs</label>
+                            <input type="number" class="form-control" value="100" min="50" max="200" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-white">Forecast Days</label>
+                            <input type="number" class="form-control" value="7" min="1" max="30" required>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="fas fa-upload me-2"></i>Upload & Analyze
+                    </button>
+                </form>
+                
+                <div class="mt-4">
+                    <h6 class="text-white mb-3">Sample CSV Format:</h6>
+                    <div class="card bg-darker border-secondary">
+                        <div class="card-body">
+                            <code class="text-info">
+Date,Close<br>
+2024-01-01,150.25<br>
+2024-01-02,151.30<br>
+2024-01-03,149.80<br>
+...
+                            </code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+{% endblock %}

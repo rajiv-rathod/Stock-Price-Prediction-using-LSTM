@@ -38,13 +38,13 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#features">
-                            <i class="fas fa-star me-1"></i> Features
+                        <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="/dashboard">
+                            <i class="fas fa-chart-candlestick me-1"></i> Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#prediction-tool">
-                            <i class="fas fa-robot me-1"></i> Try It
+                        <a class="nav-link" href="#features">
+                            <i class="fas fa-star me-1"></i> Features
                         </a>
                     </li>
                     <li class="nav-item">
