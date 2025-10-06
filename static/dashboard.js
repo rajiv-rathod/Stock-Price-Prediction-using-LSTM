@@ -13,10 +13,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize ticker tape
     initializeTickerTape();
     
-    // Form submission
-    const dashboardForm = document.getElementById('dashboardForm');
-    if (dashboardForm) {
-        dashboardForm.addEventListener('submit', handlePredictionRequest);
+    // Form submission - handle button click instead of form submit
+    const dashboardBtn = document.getElementById('dashboardPredictBtn');
+    if (dashboardBtn) {
+        dashboardBtn.addEventListener('click', handlePredictionRequest);
     }
     
     // Refresh button
@@ -180,7 +180,7 @@ async function refreshTickerData() {
 }
 
 async function handlePredictionRequest(e) {
-    e.preventDefault();
+    if (e) e.preventDefault();
     
     const ticker = document.getElementById('dashboardTicker').value.trim().toUpperCase();
     const lookback = parseInt(document.getElementById('dashboardLookback').value);
