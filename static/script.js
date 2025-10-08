@@ -316,83 +316,197 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayResults(data) {
         console.log('Displaying results...');
         
-        // Stock info
+        // Enhanced null checking to prevent "Cannot convert undefined or null to object" errors
+        if (!data) {
+            console.error('No data received');
+            showError('No data received from server');
+            return;
+        }
+        
+        // Stock info with safe property access
         const stockNameEl = document.getElementById('stockName');
         if (stockNameEl) {
-            const stockName = data.stock_info?.name || data.ticker || 'Stock';
+            const stockName = (data.stock_info && data.stock_info.name) || data.ticker || 'Stock';
             const modelType = data.model_type || 'LSTM';
             const featuresUsed = data.features_used || 1;
             stockNameEl.textContent = `${stockName} - ${modelType} (${featuresUsed} features)`;
         }
         
-        // Price information
+        // Price information with safe numeric handling
         const currentPriceEl = document.getElementById('currentPrice');
-        if (currentPriceEl) {
-            currentPriceEl.textContent = `$${data.current_price.toFixed(2)}`;
+        if (currentPriceEl && data.current_price !== undefined && data.current_price !== null) {
+            currentPriceEl.textContent = `$${parseFloat(data.current_price).toFixed(2)}`;
         }
         
         const predictedPriceEl = document.getElementById('predictedPrice');
-        if (predictedPriceEl) {
-            predictedPriceEl.textContent = `$${data.predicted_price.toFixed(2)}`;
+        if (predictedPriceEl && data.predicted_price !== undefined && data.predicted_price !== null) {
+            predictedPriceEl.textContent = `$${parseFloat(data.predicted_price).toFixed(2)}`;
         }
         
         const priceChangeEl = document.getElementById('priceChange');
-        if (priceChangeEl) {
-            const change = data.price_change;
+        if (priceChangeEl && data.price_change !== undefined && data.price_change !== null) {
+            const change = parseFloat(data.price_change);
             priceChangeEl.textContent = `${change >= 0 ? '+' : ''}$${change.toFixed(2)}`;
             priceChangeEl.className = change >= 0 ? 'mb-0 text-success' : 'mb-0 text-danger';
         }
         
         const priceChangePctEl = document.getElementById('priceChangePct');
-        if (priceChangePctEl) {
-            const changePct = data.price_change_pct;
+        if (priceChangePctEl && data.price_change_pct !== undefined && data.price_change_pct !== null) {
+            const changePct = parseFloat(data.price_change_pct);
             priceChangePctEl.textContent = `${changePct >= 0 ? '+' : ''}${changePct.toFixed(2)}%`;
             priceChangePctEl.className = changePct >= 0 ? 'mb-0 text-success' : 'mb-0 text-danger';
         }
 
-        // Metrics
-        const mapeEl = document.getElementById('mape');
-        if (mapeEl) {
-            mapeEl.textContent = `${data.metrics.mape}%`;
-        }
-        
-        const rmseEl = document.getElementById('rmse');
-        if (rmseEl) {
-            rmseEl.textContent = data.metrics.rmse.toFixed(4);
-        }
-        
-        const maeEl = document.getElementById('mae');
-        if (maeEl) {
-            maeEl.textContent = data.metrics.mae.toFixed(4);
-        }
-        
-        const dirAccEl = document.getElementById('directionalAccuracy');
-        if (dirAccEl) {
-            dirAccEl.textContent = `${data.metrics.directional_accuracy}%`;
+        // Metrics with enhanced null checking
+        if (data.metrics && typeof data.metrics === 'object') {
+            const mapeEl = document.getElementById('mape');
+            if (mapeEl && data.metrics.mape !== undefined) {
+                mapeEl.textContent = `${parseFloat(data.metrics.mape).toFixed(2)}%`;
+            }
+            
+            const rmseEl = document.getElementById('rmse');
+            if (rmseEl && data.metrics.rmse !== undefined) {
+                rmseEl.textContent = parseFloat(data.metrics.rmse).toFixed(4);
+            }
+            
+            const maeEl = document.getElementById('mae');
+            if (maeEl && data.metrics.mae !== undefined) {
+                maeEl.textContent = parseFloat(data.metrics.mae).toFixed(4);
+            }
+            
+            const dirAccEl = document.getElementById('directionalAccuracy');
+            if (dirAccEl && data.metrics.directional_accuracy !== undefined) {
+                dirAccEl.textContent = `${parseFloat(data.metrics.directional_accuracy).toFixed(1)}%`;
+            }
         }
 
-        // Interactive Chart.js charts
+        // Interactive Chart.js charts with enhanced validation
         // Price Chart
         const priceChartEl = document.getElementById('predictionChart');
-        if (priceChartEl && data.historical_data && data.future_predictions) {
-            const ctx = priceChartEl.getContext('2d');
-            if (window.priceChartInstance) window.priceChartInstance.destroy();
-            window.priceChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [...data.historical_data.dates, ...data.future_predictions.dates],
-                    datasets: [
-                        {
-                            label: 'Actual',
-                            data: data.historical_data.actual,
-                            borderColor: '#10b981',
-                            backgroundColor: 'rgba(16,185,129,0.1)',
-                            pointRadius: 0,
-                            fill: false,
+        if (priceChartEl && data.historical_data && Array.isArray(data.historical_data) && 
+            data.predictions && Array.isArray(data.predictions)) {
+            
+            try {
+                const ctx = priceChartEl.getContext('2d');
+                if (window.priceChartInstance) window.priceChartInstance.destroy();
+                
+                // Create safe chart data
+                const chartData = createSafeChartData(data);
+                
+                window.priceChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top' },
+                            title: { display: true, text: 'Stock Price Prediction' }
                         },
-                        {
-                            label: 'Predicted',
-                            data: [...data.historical_data.predicted, ...data.future_predictions.prices],
+                        scales: {
+                            x: { display: true, title: { display: true, text: 'Date' } },
+                            y: { display: true, title: { display: true, text: 'Price ($)' } }
+                        }
+                    }
+                });
+            } catch (chartError) {
+                console.error('Chart creation error:', chartError);
+                showError('Chart display failed, but prediction was successful');
+            }
+        }
+
+        // Show results section
+        if (resultsSection) {
+            resultsSection.style.display = 'block';
+        }
+    }
+
+    // Helper function to create safe chart data
+    function createSafeChartData(data) {
+        try {
+            const historicalData = Array.isArray(data.historical_data) ? data.historical_data : 
+                                 (Array.isArray(data.data) ? data.data : []);
+            const predictions = Array.isArray(data.predictions) ? data.predictions : [];
+            
+            // Create labels for chart
+            const historicalLabels = historicalData.map((_, index) => `Day ${index + 1}`);
+            const predictionLabels = predictions.map((_, index) => `Future ${index + 1}`);
+            
+            return {
+                labels: [...historicalLabels, ...predictionLabels],
+                datasets: [
+                    {
+                        label: 'Historical Data',
+                        data: [...historicalData, ...new Array(predictions.length).fill(null)],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16,185,129,0.1)',
+                        pointRadius: 2,
+                        fill: false,
+                    },
+                    {
+                        label: 'Predictions',
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102,126,234,0.1)',
+                        pointRadius: 2,
+                        fill: false,
+                    }
+                ]
+            };
+        } catch (error) {
+            console.error('Error creating chart data:', error);
+            // Return minimal safe data
+            return {
+                labels: ['No Data'],
+                datasets: [{
+                    label: 'No Data Available',
+                    data: [0],
+                    borderColor: '#gray',
+                    backgroundColor: 'rgba(128,128,128,0.1)',
+                }]
+            };
+        }
+    }
+
+    // Enhanced error handling function
+    function showError(message) {
+        console.error('Error:', message);
+        const errorAlert = document.getElementById('errorAlert');
+        if (errorAlert) {
+            const errorMessage = document.getElementById('errorMessage');
+            if (errorMessage) {
+                errorMessage.textContent = message || 'An unexpected error occurred';
+            }
+            errorAlert.style.display = 'block';
+            
+            // Auto-hide error after 10 seconds
+            setTimeout(() => {
+                hideError();
+            }, 10000);
+        }
+    }
+
+    function hideError() {
+        const errorAlert = document.getElementById('errorAlert');
+        if (errorAlert) {
+            errorAlert.style.display = 'none';
+        }
+    }
+
+    // Network error handling wrapper
+    async function safeApiCall(url, options) {
+        try {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                throw new Error('Network error: Please check your internet connection');
+            }
+            throw error;
+        }
+    }
                             borderColor: '#667eea',
                             backgroundColor: 'rgba(102,126,234,0.1)',
                             pointRadius: 0,

@@ -11,6 +11,37 @@ from datetime import datetime, timedelta
 import warnings
 warnings.filterwarnings('ignore')
 
+# Utility function to ensure safe JSON responses
+def safe_json_response(data, default_values=None):
+    """Ensure all response data is JSON-serializable and non-null"""
+    if default_values is None:
+        default_values = {
+            'historical_data': [],
+            'predictions': [],
+            'metrics': {'MAPE': 0, 'RMSE': 0, 'MAE': 0, 'R2': 0},
+            'data_points': 0,
+            'features_used': 0
+        }
+    
+    # Ensure data exists and merge with defaults
+    safe_data = {**default_values, **(data if data else {})}
+    
+    # Convert numpy types to Python native types
+    def convert_numpy(obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, dict):
+            return {key: convert_numpy(value) for key, value in obj.items()}
+        elif isinstance(obj, list):
+            return [convert_numpy(item) for item in obj]
+        return obj
+    
+    return convert_numpy(safe_data)
+
 # Core data processing
 try:
     import numpy as np
@@ -769,14 +800,28 @@ def predict():
                 
                 logger.info(f"Prediction complete. MAPE: {results['metrics'].get('MAPE', 'N/A'):.2f}%")
                 
-                return jsonify({
+                # Create safe response data
+                response_data = safe_json_response({
                     'success': True,
-                    'data': results['historical_data'],
-                    'predictions': results['predictions'],
-                    'metrics': results['metrics'],
+                    'data': results.get('historical_data', []),
+                    'historical_data': results.get('historical_data', []),
+                    'predictions': results.get('predictions', []),
+                    'metrics': results.get('metrics', {}),
                     'features_used': len(feature_cols),
-                    'data_points': len(df_features)
+                    'data_points': len(df_features),
+                    'model_type': 'Advanced Ensemble ML',
+                    'current_price': results.get('historical_data', [0])[-1] if results.get('historical_data') else 0,
+                    'predicted_price': results.get('predictions', [0])[0] if results.get('predictions') else 0
                 })
+                
+                # Calculate price change if possible
+                if response_data['current_price'] and response_data['predicted_price']:
+                    price_change = response_data['predicted_price'] - response_data['current_price']
+                    price_change_pct = (price_change / response_data['current_price']) * 100 if response_data['current_price'] != 0 else 0
+                    response_data['price_change'] = price_change
+                    response_data['price_change_pct'] = price_change_pct
+                
+                return jsonify(response_data)
                 
             except Exception as e:
                 logger.error(f"Model training error: {str(e)}")
