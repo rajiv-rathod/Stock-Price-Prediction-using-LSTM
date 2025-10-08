@@ -1,0 +1,1 @@
+// Backup of the original script.js before major fixes
