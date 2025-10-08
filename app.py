@@ -345,6 +345,100 @@ class AdvancedStockPredictor:
             # In a real scenario, you'd update technical indicators properly
         
         return future_predictions
+    
+    def predict_prices(self, df_features, feature_cols, days_ahead=5):
+        """Complete prediction pipeline with ensemble models"""
+        try:
+            # Ensure we have the target column
+            if 'Close' not in df_features.columns:
+                raise ValueError("Close column not found in features")
+                
+            # Prepare data
+            X = df_features[feature_cols].values
+            y = df_features['Close'].values
+            
+            # Ensure data is numeric
+            X = X.astype(np.float64)
+            y = y.astype(np.float64)
+            
+            # Remove any remaining NaN or infinite values
+            mask = np.isfinite(X).all(axis=1) & np.isfinite(y)
+            X, y = X[mask], y[mask]
+            
+            if len(X) < 50:
+                raise ValueError(f"Insufficient valid data points: {len(X)}")
+            
+            # Split data (80/20)
+            split = int(0.8 * len(X))
+            X_train, X_test = X[:split], X[split:]
+            y_train, y_test = y[:split], y[split:]
+            
+            # Scale data
+            scaler_X = StandardScaler()
+            scaler_y = MinMaxScaler(feature_range=(0, 1))
+            
+            X_train_scaled = scaler_X.fit_transform(X_train)
+            X_test_scaled = scaler_X.transform(X_test)
+            y_train_scaled = scaler_y.fit_transform(y_train.reshape(-1, 1)).flatten()
+            
+            # Train ensemble
+            predictions, scores = self.train_ensemble(X_train_scaled, y_train_scaled, X_test_scaled, y_test)
+            
+            # Get best model
+            ensemble_pred = predictions.get('Ensemble', predictions[list(predictions.keys())[0]])
+            
+            # Inverse transform predictions
+            ensemble_pred_original = scaler_y.inverse_transform(ensemble_pred.reshape(-1, 1)).flatten()
+            
+            # Calculate metrics
+            mape = np.mean(np.abs((y_test - ensemble_pred_original) / y_test)) * 100
+            rmse = np.sqrt(mean_squared_error(y_test, ensemble_pred_original))
+            mae = mean_absolute_error(y_test, ensemble_pred_original)
+            r2 = r2_score(y_test, ensemble_pred_original)
+            
+            # Generate future predictions
+            last_window = X_test_scaled[-1:] if len(X_test_scaled) > 0 else X_train_scaled[-1:]
+            future_preds = []
+            
+            for _ in range(days_ahead):
+                # Get prediction from ensemble
+                day_preds = []
+                for name, model in self.models.items():
+                    try:
+                        pred_scaled = model.predict(last_window)[0]
+                        day_preds.append(pred_scaled)
+                    except:
+                        continue
+                
+                if day_preds:
+                    pred_scaled = np.mean(day_preds)
+                    pred = scaler_y.inverse_transform([[pred_scaled]])[0][0]
+                    future_preds.append(float(pred))
+                    
+                    # Update window (simplified)
+                    if len(last_window[0]) > 1:
+                        new_features = np.append(last_window[0][1:], pred_scaled).reshape(1, -1)
+                        last_window = new_features
+                else:
+                    future_preds.append(float(y_test[-1]))  # Fallback
+            
+            # Prepare historical data for visualization
+            recent_data = df_features['Close'].tail(50).values.tolist()
+            
+            return {
+                'historical_data': recent_data,
+                'predictions': future_preds,
+                'metrics': {
+                    'MAPE': round(mape, 2),
+                    'RMSE': round(rmse, 2),
+                    'MAE': round(mae, 2),
+                    'R2': round(r2, 3)
+                }
+            }
+            
+        except Exception as e:
+            print(f"Error in predict_prices: {e}")
+            return None
 
 
 predictor = AdvancedStockPredictor()
