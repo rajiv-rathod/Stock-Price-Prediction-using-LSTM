@@ -3,33 +3,63 @@ Professional Stock Price Prediction System
 Advanced Machine Learning Models with Ensemble Predictions
 """
 
-from flask import Flask, render_template, request, jsonify
-from flask_cors import CORS
-import numpy as np
-import pandas as pd
-import warnings
-warnings.filterwarnings('ignore')
-
-# Advanced ML Models
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from sklearn.linear_model import ElasticNet
-from sklearn.svm import SVR
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-import xgboost as xgb
-import lightgbm as lgb
-from catboost import CatBoostRegressor
-
-# Technical Analysis
-import ta
-from scipy import stats
-from scipy.signal import argrelextrema
-import yfinance as yf
-
+# Standard library imports
 import os
 import logging
 import json
 from datetime import datetime, timedelta
+import warnings
+warnings.filterwarnings('ignore')
+
+# Core data processing
+try:
+    import numpy as np
+    import pandas as pd
+except ImportError as e:
+    print(f"Error importing core libraries: {e}")
+    print("Please install: pip install numpy pandas")
+    exit(1)
+
+# Web framework
+try:
+    from flask import Flask, render_template, request, jsonify
+    from flask_cors import CORS
+except ImportError as e:
+    print(f"Error importing Flask: {e}")
+    print("Please install: pip install Flask flask-cors")
+    exit(1)
+
+# Machine learning libraries
+try:
+    from sklearn.preprocessing import MinMaxScaler, StandardScaler
+    from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+    from sklearn.linear_model import ElasticNet
+    from sklearn.svm import SVR
+    from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+except ImportError as e:
+    print(f"Error importing scikit-learn: {e}")
+    print("Please install: pip install scikit-learn")
+    exit(1)
+
+# Advanced ML models
+try:
+    import xgboost as xgb
+    import lightgbm as lgb
+    from catboost import CatBoostRegressor
+except ImportError as e:
+    print(f"Error importing advanced ML libraries: {e}")
+    print("Please install: pip install xgboost lightgbm catboost")
+    exit(1)
+
+# Technical analysis and scientific computing
+try:
+    import ta
+    from scipy import stats
+    from scipy.signal import argrelextrema
+    import yfinance as yf
+except ImportError as e:
+    print(f"Error importing technical analysis libraries: {e}")
+    print("Please install: pip install ta scipy yfinance")
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -321,17 +351,89 @@ predictor = AdvancedStockPredictor()
 
 
 def detect_price_column(df):
-    """Detect the price column in CSV"""
-    possible_names = ['close', 'price', 'adj close', 'adjusted close', 'value', 'amount']
-    columns = df.columns.str.lower()
-    for name in possible_names:
-        if name in columns:
-            return df.columns[columns.get_loc(name)]
-    # If none found, assume first numeric column
-    numeric_cols = df.select_dtypes(include=[np.number]).columns
-    if len(numeric_cols) > 0:
-        return numeric_cols[0]
-    raise ValueError("No suitable price column found in CSV")
+    """Enhanced price column detection for ANY CSV format"""
+    try:
+        # Comprehensive price column patterns (multiple languages)
+        price_patterns = [
+            # English
+            'close', 'closing', 'closing_price', 'price', 'adj_close', 'adjusted_close', 
+            'adj close', 'adjusted close', 'value', 'amount', 'closing_value', 'close_price',
+            'end_price', 'final_price', 'settlement', 'last', 'last_price',
+            # Spanish
+            'cierre', 'precio', 'precio_cierre', 'valor_cierre', 'precio_final',
+            # French  
+            'fermeture', 'prix', 'prix_fermeture', 'valeur_fermeture',
+            # Portuguese
+            'fechamento', 'preço', 'valor_fechamento', 'preço_fechamento',
+            # German
+            'schluss', 'preis', 'schlusspreis',
+            # Other common patterns
+            'cotação', 'quotation', 'rate', 'nivel', 'level'
+        ]
+        
+        # Convert column names to lowercase for comparison
+        columns_lower = [col.lower().strip().replace(' ', '_').replace('-', '_') for col in df.columns]
+        
+        # First priority: exact matches
+        for pattern in price_patterns:
+            for i, col_lower in enumerate(columns_lower):
+                if col_lower == pattern or col_lower.endswith('_' + pattern) or col_lower.startswith(pattern + '_'):
+                    return df.columns[i]
+        
+        # Second priority: partial matches
+        for pattern in price_patterns:
+            for i, col_lower in enumerate(columns_lower):
+                if pattern in col_lower:
+                    # Verify it's numeric
+                    try:
+                        pd.to_numeric(df.iloc[:, i], errors='coerce')
+                        if df.iloc[:, i].notna().sum() > len(df) * 0.5:  # At least 50% non-null
+                            return df.columns[i]
+                    except:
+                        continue
+        
+        # Third priority: find any numeric column that could be a price
+        print("No standard price column found. Analyzing numeric columns...")
+        numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+        
+        if not numeric_cols:
+            # Try to convert object columns to numeric
+            for col in df.columns:
+                try:
+                    temp_series = pd.to_numeric(df[col], errors='coerce')
+                    if temp_series.notna().sum() > len(df) * 0.5:
+                        numeric_cols.append(col)
+                except:
+                    continue
+        
+        if not numeric_cols:
+            raise ValueError("No numeric columns found that could represent prices")
+        
+        # Prefer columns with reasonable price-like properties
+        for col in numeric_cols:
+            try:
+                values = pd.to_numeric(df[col], errors='coerce').dropna()
+                if len(values) > 0:
+                    # Check if values are reasonable for prices (positive, not extreme)
+                    if values.min() > 0 and values.max() < values.min() * 10000:
+                        print(f"Selected numeric column '{col}' as price column")
+                        return col
+            except:
+                continue
+        
+        # Last resort: take first numeric column
+        if numeric_cols:
+            print(f"Using first numeric column '{numeric_cols[0]}' as price column")
+            return numeric_cols[0]
+        
+        raise ValueError(
+            f"Could not find suitable price column. Available columns: {df.columns.tolist()}. "
+            f"Please ensure your CSV has a column with price data (Close, Price, Value, etc.)"
+        )
+        
+    except Exception as e:
+        print(f"Error in price column detection: {e}")
+        raise ValueError(f"Failed to detect price column: {str(e)}")
 
 
 def calculate_rsi(data, periods=14):
@@ -392,39 +494,96 @@ def predict():
         if not file.filename.endswith('.csv'):
             return jsonify({'success': False, 'error': 'Only CSV files allowed'}), 400
         
-        # Read CSV
-        df = pd.read_csv(file)
-        logger.info(f"CSV loaded with shape: {df.shape}")
-        logger.info(f"Columns: {df.columns.tolist()}")
-        
-        # Clean and preprocess data
+        # Read CSV with enhanced error handling
+        try:
+            # Try different encodings if needed
+            encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+            df = None
+            for encoding in encodings:
+                try:
+                    df = pd.read_csv(file, encoding=encoding)
+                    break
+                except UnicodeDecodeError:
+                    continue
+            
+            if df is None:
+                return jsonify({'success': False, 'error': 'Could not read CSV file with any encoding'}), 400
+                
+            logger.info(f"CSV loaded with shape: {df.shape}")
+            logger.info(f"Columns: {df.columns.tolist()}")
+            
+            # Validate minimum requirements
+            if df.empty or df.shape[0] < 10:
+                return jsonify({'success': False, 'error': 'CSV must have at least 10 rows of data'}), 400
+                
+        except Exception as e:
+            return jsonify({'success': False, 'error': f'Failed to read CSV: {str(e)}'}), 400
+
+        # Clean and preprocess data with enhanced error handling
         try:
             # Remove any completely empty rows/columns
+            original_shape = df.shape
             df = df.dropna(how='all').dropna(axis=1, how='all')
             
-            # Convert numeric columns to proper types
+            if df.empty:
+                return jsonify({'success': False, 'error': 'No valid data found after removing empty rows/columns'}), 400
+            
+            # Clean column names
+            df.columns = df.columns.astype(str).str.strip().str.replace(r'[^\w\s]', '', regex=True).str.replace(r'\s+', '_', regex=True)
+            
+            # Convert columns to proper types with enhanced handling
             for col in df.columns:
-                if col.lower() not in ['date', 'time', 'symbol', 'ticker']:
+                if col.lower() not in ['date', 'time', 'symbol', 'ticker', 'name']:
                     try:
-                        # Remove any non-numeric characters and convert to float
+                        # Skip if already numeric
+                        if df[col].dtype in ['int64', 'float64']:
+                            continue
+                            
+                        # Enhanced numeric conversion
                         if df[col].dtype == 'object':
-                            # Handle common formatting issues
-                            df[col] = df[col].astype(str).str.replace(',', '')  # Remove commas
-                            df[col] = df[col].str.replace('$', '')  # Remove dollar signs
-                            df[col] = df[col].str.replace('%', '')  # Remove percentage signs
-                            df[col] = pd.to_numeric(df[col], errors='coerce')
-                        else:
-                            df[col] = pd.to_numeric(df[col], errors='coerce')
+                            # Handle various number formats
+                            df[col] = df[col].astype(str)
+                            # Remove common non-numeric characters
+                            df[col] = df[col].str.replace(r'[$€£¥,]', '', regex=True)  # Currency symbols
+                            df[col] = df[col].str.replace('%', '')  # Percentage signs
+                            df[col] = df[col].str.replace(' ', '')  # Spaces
+                            # Handle European decimal format (comma as decimal separator)
+                            df[col] = df[col].str.replace(',', '.')
+                            
+                        # Convert to numeric
+                        df[col] = pd.to_numeric(df[col], errors='coerce')
+                        
+                        # Handle obvious price data errors
+                        if any(keyword in col.lower() for keyword in ['price', 'close', 'open', 'high', 'low']):
+                            # Remove negative prices and extreme outliers
+                            median_val = df[col].median()
+                            if pd.notna(median_val) and median_val > 0:
+                                df.loc[df[col] <= 0, col] = np.nan
+                                df.loc[df[col] > median_val * 1000, col] = np.nan
+                                
                     except Exception as e:
                         logger.warning(f"Could not convert column {col} to numeric: {e}")
+                        # Keep original column if conversion fails
+                        continue
             
-            # Remove rows with all NaN values after conversion
-            df = df.dropna(how='all')
+            # Remove rows where ALL numeric columns are NaN
+            numeric_cols = df.select_dtypes(include=[np.number]).columns
+            if len(numeric_cols) > 0:
+                df = df.dropna(subset=numeric_cols.tolist(), how='all')
             
-            # Forward fill any remaining NaN values
-            df = df.fillna(method='ffill').fillna(method='bfill')
+            if df.empty:
+                return jsonify({'success': False, 'error': 'No valid numeric data found after cleaning'}), 400
             
-            logger.info(f"Data cleaned, final shape: {df.shape}")
+            # Intelligent missing value handling
+            for col in numeric_cols:
+                if df[col].isna().any():
+                    # Use forward fill for price-like data, median for others
+                    if any(keyword in col.lower() for keyword in ['price', 'close', 'open', 'high', 'low']):
+                        df[col] = df[col].fillna(method='ffill').fillna(method='bfill')
+                    else:
+                        df[col] = df[col].fillna(df[col].median())
+            
+            logger.info(f"Data cleaned, final shape: {df.shape} (original: {original_shape})")
             logger.info(f"Data types: {df.dtypes.to_dict()}")
             
         except Exception as e:
@@ -450,29 +609,104 @@ def predict():
         epochs = int(request.form.get('epochs', 50))
         days_ahead = int(request.form.get('days_ahead', 5))
         
-        # Prepare data
-        prices = df[price_col].values
-        if len(prices) < lookback + 20:
+        # Enhanced model training with error handling
+        try:
+            # Prepare advanced features
+            logger.info("Creating advanced features...")
+            df_features = predictor.create_advanced_features(df)
+            
+            if df_features.empty or len(df_features) < lookback + 20:
+                return jsonify({
+                    'success': False,
+                    'error': f'Insufficient data after feature creation. Need at least {lookback + 20} points, got {len(df_features)}'
+                }), 400
+            
+            # Select feature columns (exclude target and non-numeric columns)
+            feature_cols = []
+            exclude_cols = ['Close', 'Date', 'ticker', 'symbol', 'name']
+            
+            for col in df_features.columns:
+                if col not in exclude_cols:
+                    try:
+                        # Verify column is numeric and has sufficient data
+                        if df_features[col].dtype in ['float64', 'int64']:
+                            # Check for sufficient non-null values
+                            non_null_ratio = df_features[col].notna().sum() / len(df_features)
+                            if non_null_ratio > 0.5:  # At least 50% non-null
+                                feature_cols.append(col)
+                    except Exception as e:
+                        logger.warning(f"Skipping column {col}: {e}")
+                        continue
+            
+            if len(feature_cols) < 3:
+                return jsonify({
+                    'success': False,
+                    'error': f'Insufficient valid features. Found {len(feature_cols)} features, need at least 3'
+                }), 400
+            
+            logger.info(f"Training ensemble models on {len(df_features)} samples, testing on {len(df_features)//5} samples")
+            logger.info(f"Using {len(feature_cols)} features: {feature_cols[:10]}{'...' if len(feature_cols) > 10 else ''}")
+            
+            # Train ensemble model with error handling
+            try:
+                results = predictor.predict_prices(df_features, feature_cols, days_ahead)
+                
+                if results is None:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Model training failed - no results generated'
+                    }), 500
+                
+                # Validate results
+                required_keys = ['historical_data', 'predictions', 'metrics']
+                missing_keys = [key for key in required_keys if key not in results]
+                if missing_keys:
+                    return jsonify({
+                        'success': False,
+                        'error': f'Incomplete results - missing: {missing_keys}'
+                    }), 500
+                
+                # Ensure predictions are valid numbers
+                if not results['predictions'] or any(not isinstance(p, (int, float)) or np.isnan(p) for p in results['predictions']):
+                    return jsonify({
+                        'success': False,
+                        'error': 'Invalid predictions generated (NaN or non-numeric values)'
+                    }), 500
+                
+                logger.info(f"Prediction complete. MAPE: {results['metrics'].get('MAPE', 'N/A'):.2f}%")
+                
+                return jsonify({
+                    'success': True,
+                    'data': results['historical_data'],
+                    'predictions': results['predictions'],
+                    'metrics': results['metrics'],
+                    'features_used': len(feature_cols),
+                    'data_points': len(df_features)
+                })
+                
+            except Exception as e:
+                logger.error(f"Model training error: {str(e)}")
+                return jsonify({
+                    'success': False,
+                    'error': f'Model training failed: {str(e)}',
+                    'data_shape': df_features.shape,
+                    'features_available': len(feature_cols)
+                }), 500
+                
+        except Exception as e:
+            logger.error(f"Feature preparation error: {str(e)}")
             return jsonify({
                 'success': False,
-                'error': f'Need at least {lookback + 20} data points. Got {len(prices)}'
-            }), 400
-        
-        # Prepare advanced features
-        logger.info("Creating advanced features...")
-        df_features = predictor.create_advanced_features(df)
-        
-        # Select feature columns (exclude target and non-numeric columns)
-        feature_cols = []
-        for col in df_features.columns:
-            if col not in ['Close', 'Date', 'ticker', 'symbol', 'name']:
-                try:
-                    # Check if column is numeric
-                    pd.to_numeric(df_features[col], errors='raise')
-                    if df_features[col].dtype in ['int64', 'float64']:
-                        feature_cols.append(col)
-                except:
-                    continue
+                'error': f'Feature preparation failed: {str(e)}',
+                'original_columns': df.columns.tolist()
+            }), 500
+
+    except Exception as e:
+        logger.error(f"General request error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'Request failed: {str(e)}'
+        }), 500
         
         if len(feature_cols) < 5:
             # Fallback to basic features if technical indicators failed
